@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube Translator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex flex-col items-center min-h-screen p-6">
+    <h1 class="text-3xl font-bold mb-6">YouTube Translator</h1>
+
+    <form id="translateForm" class="flex flex-col gap-4 w-full max-w-lg">
+        <input type="text" name="yt_url" placeholder="Enter YouTube URL" class="p-2 border rounded w-full" required>
+        <select name="target_lang" class="p-2 border rounded w-full">
+            <option value="ml">Malayalam</option>
+            <option value="hi">Hindi</option>
+            <option value="ta">Tamil</option>
+            <option value="en">English</option>
+        </select>
+        <button type="submit" class="bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Translate</button>
+    </form>
+
+    <div id="videoContainer" class="mt-6 w-full max-w-lg hidden">
+        <iframe id="youtubePlayer" width="100%" height="315" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen></iframe>
+    </div>
+
+    <div id="audioContainer" class="mt-6 w-full max-w-lg hidden"></div>
+
+    <script>
+        const form = document.getElementById("translateForm");
+        const videoContainer = document.getElementById("videoContainer");
+        const audioContainer = document.getElementById("audioContainer");
+        const player = document.getElementById("youtubePlayer");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            const yt_url = formData.get("yt_url");
+
+            // Show video instantly
+            const videoId = yt_url.split("v=")[1].split("&")[0];
+            player.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=1`;
+            videoContainer.classList.remove("hidden");
+
+            // Disable form while processing
+            form.querySelector("button").disabled = true;
+            form.querySelector("button").innerText = "Translating...";
+
+            // Send to backend
+            const response = await fetch("/translate", {
+                method: "POST",
+                body: formData
+            });
+            const data = await response.json();
+
+            // Show translated audio
+            audioContainer.innerHTML = `<audio controls autoplay src="/audios/${data.audio_file}"></audio>`;
+            audioContainer.classList.remove("hidden");
+
+            // Re-enable form
+            form.querySelector("button").disabled = false;
+            form.querySelector("button").innerText = "Translate";
+        });
+    </script>
+</body>
+</html>
